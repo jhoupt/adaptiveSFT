@@ -225,7 +225,7 @@ find_salience_polynomial <- function(dat, h_targ, l_targ, polynomial_order=2,
   # i^2 +  a1/a2 i - 1/(2a2)h_targ
   # -a1/a2 + sqrt((a1/a2)^2+2/a2 * h_targ) / 2
 
-  if (alpha2 <0) {
+  if (post.diff$alpha2 <0) {
   l_targ.dist <- with(post.diff,  
         (-alpha/alpha2 - sqrt( (alpha/alpha2)^2 + 2 / alpha2 * l_targ)) / 2)
   h_targ.dist <- with(post.diff,  

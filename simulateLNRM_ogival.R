@@ -14,7 +14,7 @@ posteriorPredictive <- FALSE
   fit.separate <- FALSE
 
 # Simulate single clean DFP for each model? 
-simulateSingleDFP <- TRUE
+simulateSingleDFP <- FALSE
 
 # Run full experiment
 runFullExperiment <- FALSE
@@ -89,6 +89,8 @@ if (runConvergence) {
   intensity_levels <- seq(x.range[1], x.range[2], length.out=nLevels) 
   scaled.intensity <- (intensity_levels-thres50)/(x.range[2]-thres50)
   
+  post.mean.midpoint <- matrix(NA, length(Ns))
+  post.mean.slope <- matrix(NA, length(Ns))
   post.95.midpoint <- matrix(NA, length(Ns), 2)
   post.95.slope <- matrix(NA, length(Ns), 2)
   
@@ -99,30 +101,37 @@ if (runConvergence) {
     fitDiff <- stan(fit=fitDiff, data=standatDiff, 
                     pars=c("mu", "midpoint", "slope", "varZ", "psi"))
     post.diff <- extract(fitDiff, c("midpoint", "slope"))
+    post.mean.midpoint[i,] <- mean(post.diff$midpoint)
     post.95.midpoint[i,] <- quantile(post.diff$midpoint, c(0.05, 0.95))
+    post.mean.slope[i,] <- mean(post.diff$slope)
     post.95.slope[i,] <- quantile(post.diff$slope, c(0.05, 0.95))
   }
-  save(post.95.midpoint, post.95.slope, file="post95.Rdata") 
+  save(post.mean.midpoint, post.mean.slope, post.95.midpoint, post.95.slope, file="post95.Rdata") 
 } else { 
   load("post95.Rdata")
 }
 
 setEPS()
 postscript("LNRM_parameter-convergence.eps", width=7.4, height=3.2)
-par(mfrow=c(1,2), mar=c(3.1, 3.6, 4.1, 1.1))
-matplot(1:300, post.95.midpoint, type='l', lty=2, col=2, ylab="",
+par(mfrow=c(1,2), mar=c(3.1, 3.6, 4.1, 1.1), oma=c(0,0,1,0))
+matplot(1:300, post.95.midpoint, type='l', lty=2, col=1, ylab="",
+        ylim=c(1, 1.6),
         #ylab="5/95% Posterior Quantiles", 
         main="Drift Difference Midpont", xlab="Trials per level")
 mtext("5/95% Posterior Quantiles", 2, line=1.8)
-lines(1:300, predict(loess(post.95.midpoint[,1] ~ Ns, span=.8)), col=2)
-lines(1:300, predict(loess(post.95.midpoint[,2] ~ Ns, span=.8)), col=2)
+lines(2:300, predict(loess(post.95.midpoint[2:300,1] ~ Ns[2:300], span=.5)), col=1)
+lines(2:300, predict(loess(post.95.midpoint[2:300,2] ~ Ns[2:300], span=.5)), col=1)
+#lines(1:300, post.mean.midpoint, col=1)
 
-matplot(1:300, post.95.slope, type='l', lty=2, col=2, ylab="",
+matplot(1:300, post.95.slope, type='l', lty=2, col=1, ylab="",
         #ylab="5/95% Posterior Quantiles", 
         main="Drift Difference Slope", xlab="Trials per level")
 mtext("5/95% Posterior Quantiles", 2, line=1.8)
-lines(1:300, predict(loess(post.95.slope[,1] ~ Ns, span=.8)), col=2)
-lines(1:300, predict(loess(post.95.slope[,2] ~ Ns, span=.8)), col=2)
+lines(2:300, predict(loess(post.95.slope[2:300,1] ~ Ns[2:300], span=.5)), col=1)
+lines(2:300, predict(loess(post.95.slope[2:300,2] ~ Ns[2:300], span=.5)), col=1)
+#lines(1:300, post.mean.slope, col=1)
+
+title("LNRM Parameter Estimates", outer=TRUE, line=-1, cex=1.5)
 dev.off()
 ################################
 ################################
@@ -318,8 +327,8 @@ postscript("lnrm_coactive.eps", width=6.6, height=3.3)
 par(mfrow=c(1,2), oma=c(0,0,.75,0), mar=c(3.6, 3.1, 3.1, 1.1))
 plot(tvec.dense, 1-ecdf(HH$rt[HH$x==1])(tvec.dense), type='l', col='red',
      xlab="", ylab="")
-mtext("Time (s)", side=1, line=1.75) 
-mtext("S(t)", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("S(t)", side=2, line=1.9)
 lines(tvec.dense, 1-ecdf(HL$rt[HL$x==1])(tvec.dense), col='orange')
 lines(tvec.dense, 1-ecdf(LH$rt[LH$x==1])(tvec.dense), col='purple')
 lines(tvec.dense, 1-ecdf(LL$rt[LL$x==1])(tvec.dense), col='blue')
@@ -330,8 +339,8 @@ plot(tvec.dense, p.or$SIC(tvec.dense), type='l', ylim=c(-.5, .5),
      xlab="", ylab="")
 title("Coactive", outer=TRUE, line=-2, cex=1.5)
 abline(h=0)
-mtext("Time (s)", side=1, line=1.75) 
-mtext("SIC", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("SIC(t)", side=2, line=1.9)
 dev.off()
 
 
@@ -349,8 +358,8 @@ postscript("lnrm_parallel_or.eps", width=6.6, height=3.3)
 par(mfrow=c(1,2), oma=c(0,0,.75,0), mar=c(3.6, 3.1, 3.1, 1.1))
 plot(tvec.dense, 1-ecdf(HH$rt[HH$x==1])(tvec.dense), type='l', col='red',
      xlab="", ylab="")
-mtext("Time (s)", side=1, line=1.75) 
-mtext("S(t)", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("S(t)", side=2, line=1.9)
 lines(tvec.dense, 1-ecdf(HL$rt[HL$x==1])(tvec.dense), col='orange')
 lines(tvec.dense, 1-ecdf(LH$rt[LH$x==1])(tvec.dense), col='purple')
 lines(tvec.dense, 1-ecdf(LL$rt[LL$x==1])(tvec.dense), col='blue')
@@ -361,8 +370,8 @@ plot(tvec.dense, p.or$SIC(tvec.dense), type='l', ylim=c(-.5, .5),
      xlab="", ylab="")
 title("Parallel OR", outer=TRUE, line=-2, cex=1.5)
 abline(h=0)
-mtext("Time (s)", side=1, line=1.75) 
-mtext("SIC", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("SIC(t)", side=2, line=1.9)
 dev.off()
 
 
@@ -380,8 +389,8 @@ postscript("lnrm_parallel_and.eps", width=6.6, height=3.3)
 par(mfrow=c(1,2), oma=c(0,0,.75,0), mar=c(3.6, 3.1, 3.1, 1.1))
 plot(tvec.dense, 1-ecdf(HH$rt[HH$x==1])(tvec.dense), type='l', col='red',
      xlab="", ylab="")
-mtext("Time (s)", side=1, line=1.75) 
-mtext("S(t)", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("S(t)", side=2, line=1.9)
 lines(tvec.dense, 1-ecdf(HL$rt[HL$x==1])(tvec.dense), col='orange')
 lines(tvec.dense, 1-ecdf(LH$rt[LH$x==1])(tvec.dense), col='purple')
 lines(tvec.dense, 1-ecdf(LL$rt[LL$x==1])(tvec.dense), col='blue')
@@ -392,8 +401,8 @@ plot(tvec.dense, p.and$SIC(tvec.dense), type='l', ylim=c(-.5, .5),
      xlab="", ylab="")
 title("Parallel AND", outer=TRUE, line=-2, cex=1.5)
 abline(h=0)
-mtext("Time (s)", side=1, line=1.75) 
-mtext("SIC", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("SIC(t)", side=2, line=1.9)
 dev.off()
 
 # Serial OR
@@ -410,8 +419,8 @@ postscript("lnrm_serial_or.eps", width=6.6, height=3.3)
 par(mfrow=c(1,2), oma=c(0,0,.75,0), mar=c(3.6, 3.1, 3.1, 1.1))
 plot(tvec.dense, 1-ecdf(HH$rt[HH$x==1])(tvec.dense), type='l', col='red',
      xlab="", ylab="")
-mtext("Time (s)", side=1, line=1.75) 
-mtext("S(t)", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("S(t)", side=2, line=1.9)
 lines(tvec.dense, 1-ecdf(HL$rt[HL$x==1])(tvec.dense), col='orange')
 lines(tvec.dense, 1-ecdf(LH$rt[LH$x==1])(tvec.dense), col='purple')
 lines(tvec.dense, 1-ecdf(LL$rt[LL$x==1])(tvec.dense), col='blue')
@@ -422,8 +431,8 @@ plot(tvec.dense, s.or$SIC(tvec.dense), type='l', ylim=c(-.5, .5),
      xlab="", ylab="")
 title("Serial OR", outer=TRUE, line=-2, cex=1.5)
 abline(h=0)
-mtext("Time (s)", side=1, line=1.75) 
-mtext("SIC", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("SIC(t)", side=2, line=1.9)
 dev.off()
 
 
@@ -441,8 +450,8 @@ postscript("lnrm_serial_and.eps", width=6.6, height=3.3)
 par(mfrow=c(1,2), oma=c(0,0,.75,0), mar=c(3.6, 3.1, 3.1, 1.1))
 plot(tvec.dense, 1-ecdf(HH$rt[HH$x==1])(tvec.dense), type='l', col='red',
      xlab="", ylab="")
-mtext("Time (s)", side=1, line=1.75) 
-mtext("S(t)", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("S(t)", side=2, line=1.9)
 lines(tvec.dense, 1-ecdf(HL$rt[HL$x==1])(tvec.dense), col='orange')
 lines(tvec.dense, 1-ecdf(LH$rt[LH$x==1])(tvec.dense), col='purple')
 lines(tvec.dense, 1-ecdf(LL$rt[LL$x==1])(tvec.dense), col='blue')
@@ -453,8 +462,8 @@ plot(tvec.dense, s.and$SIC(tvec.dense), type='l', ylim=c(-.5, .5),
      xlab="", ylab="")
 title("Serial AND", outer=TRUE, line=-2, cex=1.5)
 abline(h=0)
-mtext("Time (s)", side=1, line=1.75) 
-mtext("SIC", side=2, line=1.75)
+mtext("Time (s)", side=1, line=1.9) 
+mtext("SIC(t)", side=2, line=1.9)
 dev.off()
 }
 
@@ -475,7 +484,7 @@ if (runFullExperiment) {
   intensity_levels <- seq(x.range[1], x.range[2], length.out=nLevels) 
   color.intensity <- (intensity_levels-thres50)/(x.range[2]-thres50)
 
-  n.participants <- 20
+  n.participants <- 10
   n.trials <- 100
   arch <- "PAR"
   srule <- "OR"
