@@ -487,7 +487,7 @@ if (runFullExperiment) {
   n.participants <- 10
   n.trials <- 100
   arch <- "PAR"
-  srule <- "OR"
+  srule <- "AND"
   sft.all <-c()
   sft.allx <-c()
   allfit.o <- vector("list", n.participants)
@@ -566,8 +566,21 @@ if (runFullExperiment) {
   }
   colnames(allpars) <- c("a", "v", "Ter", "sdv")
 
+  sic.out <- sicGroup(sft.all, plotSIC=FALSE)
+  for (sn in 1:n.participants) { 
+    dp[sn] <- sic.out$sic[[sn]]$SICtest$positive$statistic
+    dn[sn] <- sic.out$sic[[sn]]$SICtest$negative$statistic
+    micp[sn] <- sic.out$sic[[sn]]$MICtest$p.value
+  }
+  
+  print(paste("===========", arch, srule, "D+", "==========="))
+  print(sort(dp))
 
+  print(paste("===========", arch, srule, "D-", "==========="))
+  print(sort(dn))
 
+  print(paste("===========", arch, srule, "pMIC", "==========="))
+  print(sort(micp))
 
 }
 
